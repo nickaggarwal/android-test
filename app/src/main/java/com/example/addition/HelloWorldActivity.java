@@ -1,53 +1,81 @@
 package com.example.addition;
 
+import android.app.ProgressDialog;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.TextView;
+import android.widget.Toast;
 
-import com.example.addition.helpers.ConfigHelper;
+import com.example.addition.adapters.RestaurantsAdapter;
+import com.example.addition.interfaces.RetrofitClientInstance;
+import com.example.addition.models.ListRestaurants;
+import com.example.addition.models.Restaurant;
+import com.example.addition.service.RestaurantService;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import lombok.extern.slf4j.Slf4j;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 
-public class HelloWorldActivity extends ActionBarActivity {
+public class HelloWorldActivity extends AppCompatActivity {
 
 
     // Variable Declaration
-
-    EditText firstNumber;
-    EditText secondNumber;
-    TextView addResult;
-    Button btnAdd;
-
-    double num1,num2,sum;
+    private RestaurantsAdapter restaurantsAdapter;
+    private RecyclerView recyclerView;
+    ProgressDialog progressDialog;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_hello);
-        ConfigHelper.getConfigValue(this, "api_url");
+        //ConfigHelper.getConfigValue(this, "api_url");
+
+        progressDialog = new ProgressDialog(HelloWorldActivity.this);
+        progressDialog.setMessage("Loading....");
+        progressDialog.show();
+
+        // Create Interface and Restaurant service
+        RestaurantService restaurantService = RetrofitClientInstance.getRetrofitInstance().create(RestaurantService.class);
+        Map<String, String> paramsMap = new HashMap<>();
+        paramsMap.put("location", "-33.8670522,151.1957362");
+        paramsMap.put("radius", "2500");
+        paramsMap.put("type", "restaurant");
+        paramsMap.put("key", "AIzaSyAIux_9gVtovYz4EOfxouSI5GXpkcT5KKs");
+        Call<ListRestaurants> call = restaurantService.getAllRestaurants(paramsMap);
+        call.enqueue(new Callback<ListRestaurants>() {
+            @Override
+            public void onResponse(Call<ListRestaurants> call, Response<ListRestaurants> response) {
+                progressDialog.dismiss();
+                Log.i("MAIN", response.body().toString() );
+                generateDataList(response.body().getRestaurants());
+            }
+
+            @Override
+            public void onFailure(Call<ListRestaurants> call, Throwable t) {
+                progressDialog.dismiss();
+                Toast.makeText(HelloWorldActivity.this, "Something Went Worong", Toast.LENGTH_SHORT).show();
+            }
+        });
+
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.addition, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
+    /*Method to generate List of data using RecyclerView with custom adapter*/
+    private void generateDataList(List<Restaurant> photoList) {
+        recyclerView = findViewById(R.id.custom_recycler_view);
+        restaurantsAdapter = new RestaurantsAdapter(this,photoList);
+        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(HelloWorldActivity.this);
+        recyclerView.setLayoutManager(layoutManager);
+        recyclerView.setAdapter(restaurantsAdapter);
     }
 }
