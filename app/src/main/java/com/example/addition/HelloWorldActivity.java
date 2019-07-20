@@ -48,7 +48,7 @@ public class HelloWorldActivity extends AppCompatActivity {
         // Create Interface and Restaurant service
         RestaurantService restaurantService = RetrofitClientInstance.getRetrofitInstance().create(RestaurantService.class);
         Map<String, String> paramsMap = new HashMap<>();
-        paramsMap.put("location", "-33.8670522,151.1957362");
+        paramsMap.put("location", "47.6204,-122.3491");
         paramsMap.put("radius", "2500");
         paramsMap.put("type", "restaurant");
         paramsMap.put("key", "AIzaSyAIux_9gVtovYz4EOfxouSI5GXpkcT5KKs");
